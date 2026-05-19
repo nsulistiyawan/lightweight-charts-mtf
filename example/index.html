@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lightweight Charts MTF Plugin Demo</title>
+  <script type="importmap">
+    {
+      "imports": {
+        "lightweight-charts": "https://unpkg.com/lightweight-charts@5.0.0/dist/lightweight-charts.standalone.production.mjs"
+      }
+    }
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #1e222d; font-family: -apple-system, sans-serif; }
+    #chart { width: 100vw; height: 100vh; }
+    #loading {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      color: #d1d4dc; font-size: 14px;
+    }
+    #controls {
+      position: fixed; top: 12px; left: 12px; z-index: 10;
+      display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    }
+    .control-group {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(30, 34, 45, 0.95); border: 1px solid #363a45;
+      border-radius: 6px; padding: 6px 10px;
+    }
+    .control-group label {
+      color: #d1d4dc; font-size: 12px; font-weight: 500;
+    }
+    .control-group input[type="range"] {
+      width: 80px; accent-color: #26a69a;
+    }
+    .control-group select {
+      font-size: 12px; padding: 2px 4px; border: 1px solid #363a45;
+      border-radius: 4px; background: #2a2e39; color: #d1d4dc;
+    }
+    .control-group .value {
+      color: #26a69a; font-size: 12px; min-width: 18px; text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">Loading BTC data...</div>
+  <div id="controls">
+    <div class="control-group">
+      <label>Base TF</label>
+      <select id="base-tf">
+        <option value="60">1H</option>
+        <option value="240">4H</option>
+        <option value="D" selected>1D</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>HTF 1</label>
+      <select id="htf1-tf">
+        <option value="240">4H</option>
+        <option value="D">1D</option>
+        <option value="W" selected>1W</option>
+        <option value="M">1M</option>
+      </select>
+      <input type="range" id="htf1-count" min="3" max="20" value="10" />
+      <span class="value" id="htf1-value">10</span>
+    </div>
+    <div class="control-group">
+      <label>HTF 2</label>
+      <select id="htf2-tf">
+        <option value="240">4H</option>
+        <option value="D">1D</option>
+        <option value="W">1W</option>
+        <option value="M" selected>1M</option>
+      </select>
+      <input type="range" id="htf2-count" min="3" max="12" value="6" />
+      <span class="value" id="htf2-value">6</span>
+    </div>
+    <div class="control-group">
+      <label>Gap</label>
+      <input type="range" id="htf-gap" min="1" max="20" value="5" />
+      <span class="value" id="htf-gap-value">5</span>
+    </div>
+    <div class="control-group">
+      <label>Col Gap</label>
+      <input type="range" id="col-gap" min="0" max="10" value="2" />
+      <span class="value" id="col-gap-value">2</span>
+    </div>
+  </div>
+  <div id="chart"></div>
+  <script type="module">
+    import { createChart, CandlestickSeries } from 'lightweight-charts';
+    import { MTFPrimitive } from '../dist/index.mjs';
+
+    const TF_LABELS = { '60': '1H', '240': '4H', 'D': '1D', 'W': '1W', 'M': '1M' };
+
+    let baseTf = 'D';
+    let htf1Tf = 'W';
+    let htf2Tf = 'M';
+    let htf1Count = 10;
+    let htf2Count = 6;
+    let htfGap = 5;
+    let colGap = 2;
+
+    async function fetchKlines(symbol, interval, limit = 200) {
+      const url = `https://api.bybit.com/v5/market/kline?category=linear&symbol=${symbol}&interval=${interval}&limit=${limit}`;
+      const res = await fetch(url);
+      const json = await res.json();
+      if (json.retCode !== 0) throw new Error(json.retMsg);
+      return json.result.list
+        .map(k => ({
+          time: Math.floor(parseInt(k[0]) / 1000),
+          open: parseFloat(k[1]),
+          high: parseFloat(k[2]),
+          low: parseFloat(k[3]),
+          close: parseFloat(k[4]),
+          volume: parseFloat(k[5]),
+        }))
+        .sort((a, b) => a.time - b.time);
+    }
+
+    async function loadAllData() {
+      const [base, htf1, htf2] = await Promise.all([
+        fetchKlines('BTCUSDT', baseTf, 200),
+        fetchKlines('BTCUSDT', htf1Tf, htf1Count + 2),
+        fetchKlines('BTCUSDT', htf2Tf, htf2Count + 2),
+      ]);
+      return { base, htf1, htf2 };
+    }
+
+    let { base: baseData, htf1: htf1Data, htf2: htf2Data } = await loadAllData();
+
+    document.getElementById('loading').remove();
+
+    const chart = createChart(document.getElementById('chart'), {
+      layout: {
+        background: { color: '#1e222d' },
+        textColor: '#d1d4dc',
+      },
+      grid: {
+        vertLines: { color: '#2a2e39' },
+        horzLines: { color: '#2a2e39' },
+      },
+      crosshair: { mode: 0 },
+      timeScale: {
+        borderColor: '#363a45',
+        timeVisible: baseTf === '60' || baseTf === '240',
+      },
+      rightPriceScale: {
+        borderColor: '#363a45',
+      },
+    });
+
+    const mainSeries = chart.addSeries(CandlestickSeries, {
+      upColor: '#26a69a',
+      downColor: '#ef5350',
+      borderVisible: false,
+      wickUpColor: '#26a69a',
+      wickDownColor: '#ef5350',
+    });
+
+    const mtf = new MTFPrimitive({
+      columns: [
+        {
+          timeframe: TF_LABELS[htf1Tf] || htf1Tf,
+          data: htf1Data,
+          candleCount: htf1Count,
+          upColor: '#26a69a',
+          downColor: '#ef5350',
+          wickUpColor: '#26a69a',
+          wickDownColor: '#ef5350',
+        },
+        {
+          timeframe: TF_LABELS[htf2Tf] || htf2Tf,
+          data: htf2Data,
+          candleCount: htf2Count,
+          upColor: '#26a69a',
+          downColor: '#ef5350',
+          wickUpColor: '#26a69a',
+          wickDownColor: '#ef5350',
+        },
+      ],
+      gap: htfGap,
+      columnGap: colGap,
+      showSeparators: true,
+      separatorColor: 'rgba(255,255,255,0.08)',
+      showLabels: true,
+      labelFont: '11px -apple-system, sans-serif',
+      labelColor: 'rgba(255,255,255,0.5)',
+    });
+
+    mtf.attach(chart, mainSeries, baseData);
+
+    function renderAll() {
+      mtf.update(baseData, {
+        columns: [
+          {
+            timeframe: TF_LABELS[htf1Tf] || htf1Tf,
+            data: htf1Data,
+            candleCount: htf1Count,
+            upColor: '#26a69a',
+            downColor: '#ef5350',
+            wickUpColor: '#26a69a',
+            wickDownColor: '#ef5350',
+          },
+          {
+            timeframe: TF_LABELS[htf2Tf] || htf2Tf,
+            data: htf2Data,
+            candleCount: htf2Count,
+            upColor: '#26a69a',
+            downColor: '#ef5350',
+            wickUpColor: '#26a69a',
+            wickDownColor: '#ef5350',
+          },
+        ],
+        gap: htfGap,
+        columnGap: colGap,
+      });
+    }
+
+    let debounceTimer = null;
+
+    async function refreshData() {
+      const { base, htf1, htf2 } = await loadAllData();
+      baseData = base;
+      htf1Data = htf1;
+      htf2Data = htf2;
+      renderAll();
+    }
+
+    function debouncedRefresh() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(refreshData, 300);
+    }
+
+    document.getElementById('base-tf').addEventListener('change', (e) => {
+      baseTf = e.target.value;
+      chart.timeScale().applyOptions({ timeVisible: baseTf === '60' || baseTf === '240' });
+      debouncedRefresh();
+    });
+
+    document.getElementById('htf1-tf').addEventListener('change', (e) => {
+      htf1Tf = e.target.value;
+      debouncedRefresh();
+    });
+
+    document.getElementById('htf2-tf').addEventListener('change', (e) => {
+      htf2Tf = e.target.value;
+      debouncedRefresh();
+    });
+
+    document.getElementById('htf1-count').addEventListener('input', (e) => {
+      htf1Count = parseInt(e.target.value);
+      document.getElementById('htf1-value').textContent = htf1Count;
+      renderAll();
+      debouncedRefresh();
+    });
+
+    document.getElementById('htf2-count').addEventListener('input', (e) => {
+      htf2Count = parseInt(e.target.value);
+      document.getElementById('htf2-value').textContent = htf2Count;
+      renderAll();
+      debouncedRefresh();
+    });
+
+    document.getElementById('htf-gap').addEventListener('input', (e) => {
+      htfGap = parseInt(e.target.value);
+      document.getElementById('htf-gap-value').textContent = htfGap;
+      renderAll();
+    });
+
+    document.getElementById('col-gap').addEventListener('input', (e) => {
+      colGap = parseInt(e.target.value);
+      document.getElementById('col-gap-value').textContent = colGap;
+      renderAll();
+    });
+  </script>
+</body>
+</html>
