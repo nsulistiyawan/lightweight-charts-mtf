@@ -8,6 +8,8 @@ Multi-timeframe (MTF) candle display plugin for [TradingView Lightweight Charts]
 
 ![screenshot](assets/screenshot.png)
 
+**[Live Demo](https://nsulistiyawan.github.io/lightweight-charts-mtf/)**
+
 ## Features
 
 - Display any number of higher-timeframe columns next to your main chart
