@@ -10,7 +10,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/nsulistiyawan/lightweight-charts-mtf.git"
+    "url": "git+https://github.com/nsulistiyawan/lightweight-charts-mtf.git"
   },
   "homepage": "https://github.com/nsulistiyawan/lightweight-charts-mtf#readme",
   "bugs": {
