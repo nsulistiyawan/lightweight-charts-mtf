@@ -3,17 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>lightweight-charts-mtf — Multi-Timeframe Candle Plugin</title>
+  <title>lightweight-charts-mtf — IDX Stock Multi-Timeframe Demo</title>
   <meta name="description" content="Open-source plugin for TradingView Lightweight Charts. Display higher-timeframe candles alongside your main chart." />
-  <meta property="og:title" content="lightweight-charts-mtf" />
-  <meta property="og:description" content="Multi-timeframe candle display plugin for TradingView Lightweight Charts. Any TF combo: 1H→4H/1D/1W, Daily→Weekly/Monthly." />
-  <meta property="og:image" content="https://raw.githubusercontent.com/nsulistiyawan/lightweight-charts-mtf/master/assets/screenshot.png" />
-  <meta property="og:url" content="https://nsulistiyawan.github.io/lightweight-charts-mtf/" />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="lightweight-charts-mtf" />
-  <meta name="twitter:description" content="Multi-timeframe candle display plugin for TradingView Lightweight Charts." />
-  <meta name="twitter:image" content="https://raw.githubusercontent.com/nsulistiyawan/lightweight-charts-mtf/master/assets/screenshot.png" />
   <script type="importmap">
     {
       "imports": {
@@ -23,45 +14,154 @@
   </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #1e222d; font-family: -apple-system, sans-serif; }
-    #chart { width: 100vw; height: 100vh; }
+    body { background: #131722; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; }
+    #chart { position: fixed; top: 0; left: 0; right: 220px; height: 100vh; }
     #loading {
-      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      color: #d1d4dc; font-size: 14px;
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background: #131722; color: #d1d4dc; font-size: 16px; font-weight: 500;
+      z-index: 100; transition: opacity 0.3s ease;
     }
     #controls {
       position: fixed; top: 12px; left: 12px; z-index: 10;
       display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
     }
     .control-group {
-      display: flex; align-items: center; gap: 6px;
-      background: rgba(30, 34, 45, 0.95); border: 1px solid #363a45;
-      border-radius: 6px; padding: 6px 10px;
+      background: rgba(28, 32, 44, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px; padding: 6px 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      display: flex; align-items: center; gap: 8px;
     }
-    .control-group label {
-      color: #d1d4dc; font-size: 12px; font-weight: 500;
+    label {
+      color: #8f929d; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
     }
-    .control-group input[type="range"] {
-      width: 80px; accent-color: #26a69a;
+    input[type="range"] {
+      width: 70px; accent-color: #26a69a; cursor: pointer;
     }
-    .control-group select {
-      font-size: 12px; padding: 2px 4px; border: 1px solid #363a45;
-      border-radius: 4px; background: #2a2e39; color: #d1d4dc;
+    select {
+      font-size: 12px; font-weight: 600; padding: 4px 8px; border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px; background: #1e222d; color: #d1d4dc; cursor: pointer;
+      outline: none; transition: border-color 0.2s;
     }
-    .control-group .value {
-      color: #26a69a; font-size: 12px; min-width: 18px; text-align: center;
+    select:hover {
+      border-color: #26a69a;
+    }
+    .value {
+      color: #26a69a; font-size: 12px; font-weight: 600; min-width: 18px; text-align: center;
+    }
+    #live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 6px;
+      background: rgba(8, 153, 129, 0.1);
+      border: 1px solid rgba(8, 153, 129, 0.25);
+      border-radius: 6px;
+    }
+    .live-text {
+      color: #089981;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .pulse-dot {
+      width: 6px;
+      height: 6px;
+      background-color: #089981;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 0 0 rgba(8, 153, 129, 0.7);
+      animation: pulse 1.6s infinite;
+    }
+    @keyframes pulse {
+      0% {
+        transform: scale(0.9);
+        box-shadow: 0 0 0 0 rgba(8, 153, 129, 0.7);
+      }
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 4px rgba(8, 153, 129, 0);
+      }
+      100% {
+        transform: scale(0.9);
+        box-shadow: 0 0 0 0 rgba(8, 153, 129, 0);
+      }
+    }
+    #watchlist {
+      position: fixed; top: 0; right: 0; width: 220px; height: 100vh;
+      background: rgba(19, 23, 34, 0.95);
+      border-left: 1px solid rgba(255, 255, 255, 0.08);
+      z-index: 10; display: flex; flex-direction: column;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    }
+    #watchlist-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 14px 14px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    #watchlist-title {
+      color: #d1d4dc; font-size: 13px; font-weight: 700; letter-spacing: 0.3px; margin-left: auto;
+    }
+    #watchlist-entries {
+      flex: 1; overflow-y: auto; padding: 4px 0;
+    }
+    .watchlist-item {
+      display: grid; grid-template-columns: 1fr auto auto; gap: 8px;
+      align-items: center; padding: 10px 14px; cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .watchlist-item:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .watchlist-item.active {
+      border-left-color: #089981;
+      background: rgba(8, 153, 129, 0.06);
+    }
+    .wl-symbol {
+      color: #d1d4dc; font-size: 13px; font-weight: 600;
+    }
+    .wl-price {
+      color: #d1d4dc; font-size: 13px; font-weight: 500; text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .wl-change {
+      font-size: 11px; font-weight: 600; text-align: right; min-width: 52px;
+      font-variant-numeric: tabular-nums;
+    }
+    .wl-change.pos { color: #089981; }
+    .wl-change.neg { color: #f23645; }
+    .wl-change.neu { color: #8f929d; }
+    #context-menu {
+      position: fixed; display: none; z-index: 999;
+      background: rgba(30, 34, 45, 0.95);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px; padding: 4px; min-width: 160px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    }
+    #context-menu-refresh {
+      padding: 8px 14px; color: #d1d4dc; font-size: 13px; font-weight: 500;
+      border-radius: 6px; cursor: pointer; transition: background 0.12s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    #context-menu-refresh:hover {
+      background: rgba(255, 255, 255, 0.06);
     }
   </style>
 </head>
 <body>
-  <div id="loading">Loading BTC data...</div>
+  <div id="loading">Loading IDX Stock Data...</div>
+  
   <div id="controls">
     <div class="control-group">
       <label>Base TF</label>
       <select id="base-tf">
-        <option value="60">1H</option>
-        <option value="240">4H</option>
-        <option value="D" selected>1D</option>
+        <option value="15m">15M</option>
+        <option value="240" selected>4H</option>
+        <option value="D">1D</option>
       </select>
     </div>
     <div class="control-group">
@@ -72,8 +172,8 @@
         <option value="W" selected>1W</option>
         <option value="M">1M</option>
       </select>
-      <input type="range" id="htf1-count" min="3" max="20" value="10" />
-      <span class="value" id="htf1-value">10</span>
+      <input type="range" id="htf1-count" min="3" max="20" value="8" />
+      <span class="value" id="htf1-value">8</span>
     </div>
     <div class="control-group">
       <label>HTF 2</label>
@@ -83,8 +183,8 @@
         <option value="W">1W</option>
         <option value="M" selected>1M</option>
       </select>
-      <input type="range" id="htf2-count" min="3" max="12" value="6" />
-      <span class="value" id="htf2-value">6</span>
+      <input type="range" id="htf2-count" min="3" max="12" value="4" />
+      <span class="value" id="htf2-value">4</span>
     </div>
     <div class="control-group">
       <label>Gap</label>
@@ -97,76 +197,167 @@
       <span class="value" id="col-gap-value">2</span>
     </div>
   </div>
+
+  <div id="watchlist">
+    <div id="watchlist-header">
+      <span class="pulse-dot"></span>
+      <span class="live-text">LIVE</span>
+      <span id="watchlist-title">Watchlist</span>
+    </div>
+    <div id="watchlist-entries">
+      <div class="watchlist-item active" data-stock="ANTM.JK">
+        <span class="wl-symbol">ANTM</span>
+        <span class="wl-price">—</span>
+        <span class="wl-change">—</span>
+      </div>
+      <div class="watchlist-item" data-stock="TLKM.JK">
+        <span class="wl-symbol">TLKM</span>
+        <span class="wl-price">—</span>
+        <span class="wl-change">—</span>
+      </div>
+      <div class="watchlist-item" data-stock="PTBA.JK">
+        <span class="wl-symbol">PTBA</span>
+        <span class="wl-price">—</span>
+        <span class="wl-change">—</span>
+      </div>
+    </div>
+  </div>
+
   <div id="chart"></div>
+
+  <div id="context-menu">
+    <div id="context-menu-refresh">⟳ Refresh Data</div>
+  </div>
   <script type="module">
     import { createChart, CandlestickSeries } from 'lightweight-charts';
-    import { MTFPrimitive } from '../dist/index.mjs';
+    import { MTFPrimitive, aggregateOHLC } from '../dist/index.mjs';
 
-    const TF_LABELS = { '60': '1H', '240': '4H', 'D': '1D', 'W': '1W', 'M': '1M' };
+    const TF_LABELS = { '15m': '15M', '60': '1H', '240': '4H', 'D': '1D', 'W': '1W', 'M': '1M' };
 
-    let baseTf = 'D';
+    let selectedStock = 'ANTM.JK';
+    let baseTf = '240';
     let htf1Tf = 'W';
     let htf2Tf = 'M';
-    let htf1Count = 10;
-    let htf2Count = 6;
+    let htf1Count = 8;
+    let htf2Count = 4;
     let htfGap = 5;
     let colGap = 2;
 
-    async function fetchKlines(symbol, interval, limit = 200) {
-      const url = `https://api.bybit.com/v5/market/kline?category=linear&symbol=${symbol}&interval=${interval}&limit=${limit}`;
+    async function fetchKlines(ticker, interval, range) {
+      const url = `/api/stock/${ticker}?interval=${interval}&range=${range}`;
       const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
       const json = await res.json();
-      if (json.retCode !== 0) throw new Error(json.retMsg);
-      return json.result.list
-        .map(k => ({
-          time: Math.floor(parseInt(k[0]) / 1000),
-          open: parseFloat(k[1]),
-          high: parseFloat(k[2]),
-          low: parseFloat(k[3]),
-          close: parseFloat(k[4]),
-          volume: parseFloat(k[5]),
-        }))
-        .sort((a, b) => a.time - b.time);
+      if (!json.chart || !json.chart.result || json.chart.result.length === 0) {
+        throw new Error(json.chart?.error?.description || "Failed to load stock data");
+      }
+      const result = json.chart.result[0];
+      const timestamps = result.timestamp || [];
+      const quote = result.indicators.quote[0];
+      const data = [];
+      const tzOffset = 7 * 3600; // Shift to Asia/Jakarta (GMT+7)
+      for (let i = 0; i < timestamps.length; i++) {
+        if (
+          quote.open[i] != null &&
+          quote.high[i] != null &&
+          quote.low[i] != null &&
+          quote.close[i] != null
+        ) {
+          data.push({
+            time: timestamps[i] + tzOffset,
+            open: quote.open[i],
+            high: quote.high[i],
+            low: quote.low[i],
+            close: quote.close[i],
+            volume: quote.volume[i] || 0
+          });
+        }
+      }
+      return data;
     }
 
     async function loadAllData() {
-      const [base, htf1, htf2] = await Promise.all([
-        fetchKlines('BTCUSDT', baseTf, 200),
-        fetchKlines('BTCUSDT', htf1Tf, htf1Count + 2),
-        fetchKlines('BTCUSDT', htf2Tf, htf2Count + 2),
-      ]);
+      let rawData;
+      if (baseTf === '15m') {
+        rawData = await fetchKlines(selectedStock, '15m', '60d');
+      } else if (baseTf === '60' || baseTf === '240') {
+        rawData = await fetchKlines(selectedStock, '1h', '730d');
+      } else {
+        rawData = await fetchKlines(selectedStock, '1d', '2y');
+      }
+
+      if (rawData.length === 0) {
+        throw new Error("No data returned from API");
+      }
+
+      let base;
+      if (baseTf === '15m' || baseTf === '60') {
+        base = rawData;
+      } else if (baseTf === '240') {
+        base = aggregateOHLC(rawData, '4H');
+      } else {
+        base = rawData;
+      }
+
+      const getPeriod = (tfVal) => {
+        if (tfVal === '240') return '4H';
+        if (tfVal === 'D') return '1D';
+        if (tfVal === 'W') return '1W';
+        if (tfVal === 'M') return '1M';
+        return null;
+      };
+
+      const htf1Period = getPeriod(htf1Tf);
+      const htf2Period = getPeriod(htf2Tf);
+
+      const htf1 = htf1Period ? aggregateOHLC(rawData, htf1Period) : [];
+      const htf2 = htf2Period ? aggregateOHLC(rawData, htf2Period) : [];
+
       return { base, htf1, htf2 };
     }
 
-    let { base: baseData, htf1: htf1Data, htf2: htf2Data } = await loadAllData();
+    const loadingEl = document.getElementById('loading');
+    function showLoading() {
+      loadingEl.style.display = 'flex';
+      loadingEl.style.opacity = '1';
+    }
+    function hideLoading() {
+      loadingEl.style.opacity = '0';
+      setTimeout(() => {
+        loadingEl.style.display = 'none';
+      }, 300);
+    }
 
-    document.getElementById('loading').remove();
+    let { base: baseData, htf1: htf1Data, htf2: htf2Data } = await loadAllData();
+    hideLoading();
 
     const chart = createChart(document.getElementById('chart'), {
       layout: {
-        background: { color: '#1e222d' },
+        background: { color: '#131722' },
         textColor: '#d1d4dc',
       },
       grid: {
-        vertLines: { color: '#2a2e39' },
-        horzLines: { color: '#2a2e39' },
+        vertLines: { color: '#1f222e' },
+        horzLines: { color: '#1f222e' },
       },
       crosshair: { mode: 0 },
       timeScale: {
-        borderColor: '#363a45',
-        timeVisible: baseTf === '60' || baseTf === '240',
+        borderColor: '#2f3241',
+        timeVisible: baseTf === '15m' || baseTf === '60' || baseTf === '240',
       },
       rightPriceScale: {
-        borderColor: '#363a45',
+        borderColor: '#2f3241',
       },
     });
 
     const mainSeries = chart.addSeries(CandlestickSeries, {
-      upColor: '#26a69a',
-      downColor: '#ef5350',
+      upColor: '#089981',
+      downColor: '#f23645',
       borderVisible: false,
-      wickUpColor: '#26a69a',
-      wickDownColor: '#ef5350',
+      wickUpColor: '#089981',
+      wickDownColor: '#f23645',
     });
 
     const mtf = new MTFPrimitive({
@@ -175,19 +366,19 @@
           timeframe: TF_LABELS[htf1Tf] || htf1Tf,
           data: htf1Data,
           candleCount: htf1Count,
-          upColor: '#26a69a',
-          downColor: '#ef5350',
-          wickUpColor: '#26a69a',
-          wickDownColor: '#ef5350',
+          upColor: '#089981',
+          downColor: '#f23645',
+          wickUpColor: '#089981',
+          wickDownColor: '#f23645',
         },
         {
           timeframe: TF_LABELS[htf2Tf] || htf2Tf,
           data: htf2Data,
           candleCount: htf2Count,
-          upColor: '#26a69a',
-          downColor: '#ef5350',
-          wickUpColor: '#26a69a',
-          wickDownColor: '#ef5350',
+          upColor: '#089981',
+          downColor: '#f23645',
+          wickUpColor: '#089981',
+          wickDownColor: '#f23645',
         },
       ],
       gap: htfGap,
@@ -195,7 +386,7 @@
       showSeparators: true,
       separatorColor: 'rgba(255,255,255,0.08)',
       showLabels: true,
-      labelFont: '11px -apple-system, sans-serif',
+      labelFont: '11px -apple-system, BlinkMacSystemFont, sans-serif',
       labelColor: 'rgba(255,255,255,0.5)',
     });
 
@@ -208,19 +399,19 @@
             timeframe: TF_LABELS[htf1Tf] || htf1Tf,
             data: htf1Data,
             candleCount: htf1Count,
-            upColor: '#26a69a',
-            downColor: '#ef5350',
-            wickUpColor: '#26a69a',
-            wickDownColor: '#ef5350',
+            upColor: '#089981',
+            downColor: '#f23645',
+            wickUpColor: '#089981',
+            wickDownColor: '#f23645',
           },
           {
             timeframe: TF_LABELS[htf2Tf] || htf2Tf,
             data: htf2Data,
             candleCount: htf2Count,
-            upColor: '#26a69a',
-            downColor: '#ef5350',
-            wickUpColor: '#26a69a',
-            wickDownColor: '#ef5350',
+            upColor: '#089981',
+            downColor: '#f23645',
+            wickUpColor: '#089981',
+            wickDownColor: '#f23645',
           },
         ],
         gap: htfGap,
@@ -229,23 +420,56 @@
     }
 
     let debounceTimer = null;
+    let autoUpdateInterval = null;
 
-    async function refreshData() {
-      const { base, htf1, htf2 } = await loadAllData();
-      baseData = base;
-      htf1Data = htf1;
-      htf2Data = htf2;
-      renderAll();
+    async function refreshData(silent = false) {
+      if (!silent) showLoading();
+      try {
+        const { base, htf1, htf2 } = await loadAllData();
+        baseData = base;
+        htf1Data = htf1;
+        htf2Data = htf2;
+        renderAll();
+      } catch (err) {
+        console.error(err);
+        if (!silent) {
+          alert("Failed to load stock data: " + err.message);
+        }
+      } finally {
+        if (!silent) hideLoading();
+      }
+    }
+
+    function startAutoUpdate() {
+      stopAutoUpdate();
+      autoUpdateInterval = setInterval(() => {
+        refreshData(true);
+      }, 30000); // refresh every 30 seconds
+    }
+
+    function stopAutoUpdate() {
+      if (autoUpdateInterval) {
+        clearInterval(autoUpdateInterval);
+        autoUpdateInterval = null;
+      }
     }
 
     function debouncedRefresh() {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(refreshData, 300);
+      stopAutoUpdate();
+      debounceTimer = setTimeout(() => {
+        refreshData(false).then(() => {
+          startAutoUpdate();
+        });
+      }, 300);
     }
+
+    // Start auto update on page load
+    startAutoUpdate();
 
     document.getElementById('base-tf').addEventListener('change', (e) => {
       baseTf = e.target.value;
-      chart.timeScale().applyOptions({ timeVisible: baseTf === '60' || baseTf === '240' });
+      chart.timeScale().applyOptions({ timeVisible: baseTf === '15m' || baseTf === '60' || baseTf === '240' });
       debouncedRefresh();
     });
 
@@ -284,6 +508,104 @@
       document.getElementById('col-gap-value').textContent = colGap;
       renderAll();
     });
+
+    // ── Watchlist ──
+    const WATCHLIST_TICKERS = [
+      { symbol: 'ANTM', value: 'ANTM.JK' },
+      { symbol: 'TLKM', value: 'TLKM.JK' },
+      { symbol: 'PTBA', value: 'PTBA.JK' },
+    ];
+    const watchlistItems = document.querySelectorAll('.watchlist-item');
+
+    async function fetchQuote(ticker) {
+      try {
+        const data = await fetchKlines(ticker, '1d', '5d');
+        if (data.length < 2) return null;
+        const last = data[data.length - 1].close;
+        const prev = data[data.length - 2].close;
+        return { price: last, change: last - prev, changePct: ((last - prev) / prev) * 100 };
+      } catch { return null; }
+    }
+
+    async function updateWatchlistQuotes() {
+      for (const item of watchlistItems) {
+        const stock = item.dataset.stock;
+        const quote = await fetchQuote(stock);
+        const priceEl = item.querySelector('.wl-price');
+        const changeEl = item.querySelector('.wl-change');
+        if (quote) {
+          priceEl.textContent = quote.price.toFixed(0);
+          changeEl.textContent = (quote.change >= 0 ? '+' : '') + quote.changePct.toFixed(2) + '%';
+          changeEl.className = 'wl-change ' + (quote.change >= 0 ? 'pos' : 'neg');
+        }
+      }
+    }
+
+    // Update active watchlist item
+    function setActiveWatchlist(stockValue) {
+      watchlistItems.forEach(el => {
+        el.classList.toggle('active', el.dataset.stock === stockValue);
+      });
+    }
+
+    // Watchlist click
+    watchlistItems.forEach(el => {
+      el.addEventListener('click', () => {
+        const val = el.dataset.stock;
+        if (val === selectedStock) return;
+        selectedStock = val;
+        setActiveWatchlist(val);
+        debouncedRefresh();
+      });
+    });
+
+    // ── Context Menu (right-click refresh) ──
+    const contextMenu = document.getElementById('context-menu');
+    const chartContainer = document.getElementById('chart');
+
+    chartContainer.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const x = Math.min(e.clientX, window.innerWidth - 180);
+      const y = Math.min(e.clientY, window.innerHeight - 60);
+      contextMenu.style.left = x + 'px';
+      contextMenu.style.top = y + 'px';
+      contextMenu.style.display = 'block';
+    });
+
+    document.getElementById('context-menu-refresh').addEventListener('click', () => {
+      contextMenu.style.display = 'none';
+      refreshData(false);
+    });
+
+    document.addEventListener('click', () => {
+      contextMenu.style.display = 'none';
+    });
+
+    // ── Set default visible range to last 3 months ──
+    function setDefaultVisibleRange() {
+      const now = Math.floor(Date.now() / 1000);
+      const threeMonthsAgo = now - 90 * 86400;
+      chart.timeScale().setVisibleRange({
+        from: threeMonthsAgo,
+        to: now,
+      });
+    }
+
+    // Call after initial render
+    setDefaultVisibleRange();
+
+    // Override renderAll to also apply visible range
+    const origRenderAll = renderAll;
+    renderAll = function() {
+      origRenderAll();
+      setDefaultVisibleRange();
+    };
+
+    // Initial watchlist quote fetch
+    updateWatchlistQuotes();
+
+    // ── Set active on initial load ──
+    setActiveWatchlist(selectedStock);
   </script>
 </body>
 </html>

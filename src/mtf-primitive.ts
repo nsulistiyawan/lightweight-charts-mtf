@@ -145,7 +145,6 @@ export class MTFPrimitive {
       this._mainSeries.attachPrimitive(this._separator);
     }
 
-    this._chart.timeScale().fitContent();
   }
 
   private _detectBarDuration(data: OHLCData[]): number {
