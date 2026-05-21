@@ -34,7 +34,7 @@ const server = http.createServer((req, res) => {
     
     const options = {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
       }
     };
 
@@ -42,15 +42,16 @@ const server = http.createServer((req, res) => {
       let data = '';
       yahooRes.on('data', (chunk) => { data += chunk; });
       yahooRes.on('end', () => {
-        res.writeHead(200, {
+        const statusCode = yahooRes.statusCode || 200;
+        res.writeHead(statusCode, {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
         });
         res.end(data);
       });
     }).on('error', (err) => {
-      res.writeHead(500, { 'Content-Type': 'text/plain' });
-      res.end(`Proxy error: ${err.message}`);
+      res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: true, message: `Yahoo proxy error: ${err.message}` }));
     });
     return;
   }

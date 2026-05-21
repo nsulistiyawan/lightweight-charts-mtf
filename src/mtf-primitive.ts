@@ -10,6 +10,7 @@ const DEFAULT_OPTIONS: Omit<ResolvedMTFOptions, 'columns'> = {
   showLabels: true,
   labelFont: '11px sans-serif',
   labelColor: 'rgba(255,255,255,0.5)',
+  rightMargin: 0,
 };
 
 const DEFAULT_COLUMN = {
@@ -124,7 +125,7 @@ export class MTFPrimitive {
       currentOffset += count + columnGap;
     }
 
-    const totalBars = currentOffset + 2;
+    const totalBars = currentOffset + 2 + this._options.rightMargin;
     const whitespace: any[] = [];
     for (let i = 1; i <= totalBars; i++) {
       whitespace.push({ time: lastMainTime + i * this._barDuration });
@@ -184,6 +185,7 @@ export class MTFPrimitive {
       showLabels: options.showLabels ?? DEFAULT_OPTIONS.showLabels,
       labelFont: options.labelFont ?? DEFAULT_OPTIONS.labelFont,
       labelColor: options.labelColor ?? DEFAULT_OPTIONS.labelColor,
+      rightMargin: options.rightMargin ?? DEFAULT_OPTIONS.rightMargin,
       columns,
     };
   }

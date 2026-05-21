@@ -14,55 +14,55 @@
   </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #131722; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; }
-    #chart { position: fixed; top: 0; left: 0; right: 220px; height: 100vh; }
+    body { background: #fffcee; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; }
+    #chart { position: fixed; top: 0; left: 160px; right: 0; height: 100vh; }
     #loading {
       position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
       display: flex; align-items: center; justify-content: center;
-      background: #131722; color: #d1d4dc; font-size: 16px; font-weight: 500;
+      background: #fffcee; color: #4a4a4a; font-size: 16px; font-weight: 500;
       z-index: 100; transition: opacity 0.3s ease;
     }
     #controls {
-      position: fixed; top: 12px; left: 12px; z-index: 10;
+      position: fixed; top: 12px; left: 172px; z-index: 10;
       display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
     }
     .control-group {
-      background: rgba(28, 32, 44, 0.8);
+      background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(0, 0, 0, 0.06);
       border-radius: 8px; padding: 6px 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
       display: flex; align-items: center; gap: 8px;
     }
     label {
-      color: #8f929d; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+      color: #6b7280; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
     }
     input[type="range"] {
-      width: 70px; accent-color: #26a69a; cursor: pointer;
+      width: 70px; accent-color: #4caf50; cursor: pointer;
     }
     select {
-      font-size: 12px; font-weight: 600; padding: 4px 8px; border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 6px; background: #1e222d; color: #d1d4dc; cursor: pointer;
+      font-size: 12px; font-weight: 600; padding: 4px 8px; border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 6px; background: #ffffff; color: #4a4a4a; cursor: pointer;
       outline: none; transition: border-color 0.2s;
     }
     select:hover {
-      border-color: #26a69a;
+      border-color: #4caf50;
     }
     .value {
-      color: #26a69a; font-size: 12px; font-weight: 600; min-width: 18px; text-align: center;
+      color: #4caf50; font-size: 12px; font-weight: 600; min-width: 18px; text-align: center;
     }
     #live-indicator {
       display: flex;
       align-items: center;
       gap: 6px;
       padding: 3px 6px;
-      background: rgba(8, 153, 129, 0.1);
-      border: 1px solid rgba(8, 153, 129, 0.25);
+      background: rgba(76, 175, 80, 0.1);
+      border: 1px solid rgba(76, 175, 80, 0.25);
       border-radius: 6px;
     }
     .live-text {
-      color: #089981;
+      color: #2e7d32;
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 0.5px;
@@ -70,10 +70,10 @@
     .pulse-dot {
       width: 6px;
       height: 6px;
-      background-color: #089981;
+      background-color: #2e7d32;
       border-radius: 50%;
       display: inline-block;
-      box-shadow: 0 0 0 0 rgba(8, 153, 129, 0.7);
+      box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7);
       animation: pulse 1.6s infinite;
     }
     @keyframes pulse {
@@ -91,18 +91,17 @@
       }
     }
     #watchlist {
-      position: fixed; top: 0; right: 0; width: 220px; height: 100vh;
-      background: rgba(19, 23, 34, 0.95);
-      border-left: 1px solid rgba(255, 255, 255, 0.08);
+      position: fixed; top: 0; left: 0; width: 160px; height: 100vh;
+      background: #ffffff;
+      border-right: 1px solid rgba(0, 0, 0, 0.06);
       z-index: 10; display: flex; flex-direction: column;
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     }
     #watchlist-header {
       display: flex; align-items: center; gap: 8px;
-      padding: 14px 14px 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 14px 14px 10px; border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     }
     #watchlist-title {
-      color: #d1d4dc; font-size: 13px; font-weight: 700; letter-spacing: 0.3px; margin-left: auto;
+      color: #4a4a4a; font-size: 13px; font-weight: 700; letter-spacing: 0.3px; margin-left: auto;
     }
     #watchlist-entries {
       flex: 1; overflow-y: auto; padding: 4px 0;
@@ -114,41 +113,41 @@
       transition: background 0.15s, border-color 0.15s;
     }
     .watchlist-item:hover {
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(0, 0, 0, 0.03);
     }
     .watchlist-item.active {
-      border-left-color: #089981;
-      background: rgba(8, 153, 129, 0.06);
+      border-left-color: #4caf50;
+      background: rgba(76, 175, 80, 0.08);
     }
     .wl-symbol {
-      color: #d1d4dc; font-size: 13px; font-weight: 600;
+      color: #4a4a4a; font-size: 13px; font-weight: 600;
     }
     .wl-price {
-      color: #d1d4dc; font-size: 13px; font-weight: 500; text-align: right;
+      color: #4a4a4a; font-size: 13px; font-weight: 500; text-align: right;
       font-variant-numeric: tabular-nums;
     }
     .wl-change {
       font-size: 11px; font-weight: 600; text-align: right; min-width: 52px;
       font-variant-numeric: tabular-nums;
     }
-    .wl-change.pos { color: #089981; }
-    .wl-change.neg { color: #f23645; }
-    .wl-change.neu { color: #8f929d; }
+    .wl-change.pos { color: #2e7d32; }
+    .wl-change.neg { color: #d32f2f; }
+    .wl-change.neu { color: #9e9e9e; }
     #context-menu {
       position: fixed; display: none; z-index: 999;
-      background: rgba(30, 34, 45, 0.95);
+      background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(0, 0, 0, 0.08);
       border-radius: 8px; padding: 4px; min-width: 160px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     }
     #context-menu-refresh {
-      padding: 8px 14px; color: #d1d4dc; font-size: 13px; font-weight: 500;
+      padding: 8px 14px; color: #4a4a4a; font-size: 13px; font-weight: 500;
       border-radius: 6px; cursor: pointer; transition: background 0.12s;
       display: flex; align-items: center; gap: 8px;
     }
     #context-menu-refresh:hover {
-      background: rgba(255, 255, 255, 0.06);
+      background: rgba(0, 0, 0, 0.04);
     }
   </style>
 </head>
@@ -243,39 +242,70 @@
     let htfGap = 5;
     let colGap = 2;
 
-    async function fetchKlines(ticker, interval, range) {
-      const url = `/api/stock/${ticker}?interval=${interval}&range=${range}`;
-      const res = await fetch(url);
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-      const json = await res.json();
-      if (!json.chart || !json.chart.result || json.chart.result.length === 0) {
-        throw new Error(json.chart?.error?.description || "Failed to load stock data");
-      }
-      const result = json.chart.result[0];
-      const timestamps = result.timestamp || [];
-      const quote = result.indicators.quote[0];
-      const data = [];
-      const tzOffset = 7 * 3600; // Shift to Asia/Jakarta (GMT+7)
-      for (let i = 0; i < timestamps.length; i++) {
-        if (
-          quote.open[i] != null &&
-          quote.high[i] != null &&
-          quote.low[i] != null &&
-          quote.close[i] != null
-        ) {
-          data.push({
-            time: timestamps[i] + tzOffset,
-            open: quote.open[i],
-            high: quote.high[i],
-            low: quote.low[i],
-            close: quote.close[i],
-            volume: quote.volume[i] || 0
-          });
+    async function fetchKlines(ticker, interval, range, retries = 2) {
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          const url = `/api/stock/${ticker}?interval=${interval}&range=${range}`;
+          const res = await fetch(url);
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+          const json = await res.json();
+          if (!json.chart || !json.chart.result || json.chart.result.length === 0) {
+            throw new Error(json.chart?.error?.description || "No data");
+          }
+          const result = json.chart.result[0];
+          const timestamps = result.timestamp || [];
+          const quote = result.indicators.quote[0];
+          const data = [];
+          const tzOffset = 7 * 3600;
+          for (let i = 0; i < timestamps.length; i++) {
+            if (
+              quote.open[i] != null &&
+              quote.high[i] != null &&
+              quote.low[i] != null &&
+              quote.close[i] != null
+            ) {
+              data.push({
+                time: timestamps[i] + tzOffset,
+                open: quote.open[i],
+                high: quote.high[i],
+                low: quote.low[i],
+                close: quote.close[i],
+                volume: quote.volume[i] || 0
+              });
+            }
+          }
+          return data;
+        } catch (err) {
+          if (attempt === retries) throw new Error(`Failed after ${retries + 1} attempts: ${err.message}`);
+          await new Promise(r => setTimeout(r, 1000));
         }
       }
-      return data;
+    }
+
+    // ── IEP (Pre-closing) candle merger ──
+    // IDX pre-closing session produces a flat candle that breaks 4H aggregation.
+    // This merges IEP candles into the preceding candle.
+    function mergeIEPCandles(data) {
+      if (data.length < 2) return data;
+      const merged = [{ ...data[0] }];
+      for (let i = 1; i < data.length; i++) {
+        const bar = data[i];
+        const isIEP = (bar.high - bar.low) === 0 ||
+                       (bar.volume !== undefined && bar.volume < 500) ||
+                       ((bar.high - bar.low) / (bar.close || 1) < 0.0005);
+        if (isIEP) {
+          const prev = merged[merged.length - 1];
+          prev.high = Math.max(prev.high, bar.high);
+          prev.low = Math.min(prev.low, bar.low);
+          prev.close = bar.close;
+          prev.volume = (prev.volume || 0) + (bar.volume || 0);
+        } else {
+          merged.push({ ...bar });
+        }
+      }
+      return merged;
     }
 
     async function loadAllData() {
@@ -291,6 +321,9 @@
       if (rawData.length === 0) {
         throw new Error("No data returned from API");
       }
+
+      // Merge IEP (pre-closing) flat candles into preceding candle
+      rawData = mergeIEPCandles(rawData);
 
       let base;
       if (baseTf === '15m' || baseTf === '60') {
@@ -330,34 +363,48 @@
       }, 300);
     }
 
+    // ── Set default visible range to last 3 months ──
+    function setDefaultVisibleRange() {
+      const now = Math.floor(Date.now() / 1000);
+      const threeMonthsAgo = now - 90 * 86400;
+      const barSec = baseTf === '15m' ? 900 : baseTf === '240' ? 14400 : 86400;
+      const htfSpan = (htfGap + htf1Count + colGap + htf2Count + 2 + 60) * barSec;
+      chart.timeScale().setVisibleRange({
+        from: threeMonthsAgo,
+        to: now + htfSpan,
+      });
+    }
+
     let { base: baseData, htf1: htf1Data, htf2: htf2Data } = await loadAllData();
     hideLoading();
 
     const chart = createChart(document.getElementById('chart'), {
       layout: {
-        background: { color: '#131722' },
-        textColor: '#d1d4dc',
+        background: { color: '#fffcee' },
+        textColor: '#4a4a4a',
       },
       grid: {
-        vertLines: { color: '#1f222e' },
-        horzLines: { color: '#1f222e' },
+        vertLines: { color: 'transparent' },
+        horzLines: { color: 'transparent' },
       },
       crosshair: { mode: 0 },
       timeScale: {
-        borderColor: '#2f3241',
+        borderColor: 'rgba(0,0,0,0.1)',
         timeVisible: baseTf === '15m' || baseTf === '60' || baseTf === '240',
       },
       rightPriceScale: {
-        borderColor: '#2f3241',
+        borderColor: 'rgba(0,0,0,0.1)',
       },
     });
 
     const mainSeries = chart.addSeries(CandlestickSeries, {
-      upColor: '#089981',
-      downColor: '#f23645',
-      borderVisible: false,
-      wickUpColor: '#089981',
-      wickDownColor: '#f23645',
+      upColor: 'rgba(129,199,132,0.5)',
+      downColor: '#4a4a4a',
+      borderVisible: true,
+      borderUpColor: '#1b5e20',
+      borderDownColor: '#000000',
+      wickUpColor: '#1b5e20',
+      wickDownColor: '#000000',
     });
 
     const mtf = new MTFPrimitive({
@@ -366,31 +413,40 @@
           timeframe: TF_LABELS[htf1Tf] || htf1Tf,
           data: htf1Data,
           candleCount: htf1Count,
-          upColor: '#089981',
-          downColor: '#f23645',
-          wickUpColor: '#089981',
-          wickDownColor: '#f23645',
+          upColor: 'rgba(129,199,132,0.5)',
+          downColor: '#4a4a4a',
+          borderVisible: true,
+          borderUpColor: '#1b5e20',
+          borderDownColor: '#000000',
+          wickUpColor: '#1b5e20',
+          wickDownColor: '#000000',
         },
         {
           timeframe: TF_LABELS[htf2Tf] || htf2Tf,
           data: htf2Data,
           candleCount: htf2Count,
-          upColor: '#089981',
-          downColor: '#f23645',
-          wickUpColor: '#089981',
-          wickDownColor: '#f23645',
+          upColor: 'rgba(129,199,132,0.5)',
+          downColor: '#4a4a4a',
+          borderVisible: true,
+          borderUpColor: '#1b5e20',
+          borderDownColor: '#000000',
+          wickUpColor: '#1b5e20',
+          wickDownColor: '#000000',
         },
       ],
       gap: htfGap,
       columnGap: colGap,
+      rightMargin: 60,
       showSeparators: true,
-      separatorColor: 'rgba(255,255,255,0.08)',
+      separatorColor: 'rgba(0,0,0,0.08)',
       showLabels: true,
       labelFont: '11px -apple-system, BlinkMacSystemFont, sans-serif',
-      labelColor: 'rgba(255,255,255,0.5)',
+      labelColor: 'rgba(0,0,0,0.45)',
     });
 
+    let fvgPrimitive = null;
     mtf.attach(chart, mainSeries, baseData);
+    updateFVG();
 
     function renderAll() {
       mtf.update(baseData, {
@@ -399,30 +455,130 @@
             timeframe: TF_LABELS[htf1Tf] || htf1Tf,
             data: htf1Data,
             candleCount: htf1Count,
-            upColor: '#089981',
-            downColor: '#f23645',
-            wickUpColor: '#089981',
-            wickDownColor: '#f23645',
+            upColor: 'rgba(129,199,132,0.5)',
+            downColor: '#4a4a4a',
+            borderVisible: true,
+            borderUpColor: '#1b5e20',
+            borderDownColor: '#000000',
+            wickUpColor: '#1b5e20',
+            wickDownColor: '#000000',
           },
           {
             timeframe: TF_LABELS[htf2Tf] || htf2Tf,
             data: htf2Data,
             candleCount: htf2Count,
-            upColor: '#089981',
-            downColor: '#f23645',
-            wickUpColor: '#089981',
-            wickDownColor: '#f23645',
+            upColor: 'rgba(129,199,132,0.5)',
+            downColor: '#4a4a4a',
+            borderVisible: true,
+            borderUpColor: '#1b5e20',
+            borderDownColor: '#000000',
+            wickUpColor: '#1b5e20',
+            wickDownColor: '#000000',
           },
         ],
         gap: htfGap,
         columnGap: colGap,
+        rightMargin: 60,
       });
+      updateFVG();
+    }
+
+    // ── FVG (Fair Value Gap) from weekly data ──
+    function getTimeAsNumber(time) {
+      if (typeof time === 'number') return time;
+      if (typeof time === 'string') return Math.floor(new Date(time).getTime() / 1000);
+      return Math.floor(new Date(`${time.year}-${String(time.month).padStart(2, '0')}-${String(time.day).padStart(2, '0')}`).getTime() / 1000);
+    }
+
+    class FVGPrimitive {
+      constructor(opts) {
+        this._weeklyData = opts.weeklyData || [];
+        this._lastMainTime = opts.lastMainTime || 0;
+        this._barDuration = opts.barDuration || 86400;
+        this._fvgEndTime = opts.fvgEndTime || 0;
+        this._chart = null;
+        this._zones = [];
+        this._scan();
+      }
+      attached(param) {
+        this._chart = param.chart;
+      }
+      detached() {
+        this._chart = null;
+      }
+      updateAllViews() {}
+      paneViews() {
+        return [{ renderer: () => this, zOrder: () => 'bottom' }];
+      }
+      updateData(weeklyData, lastMainTime, barDuration, fvgEndTime) {
+        this._weeklyData = weeklyData || [];
+        this._lastMainTime = lastMainTime;
+        this._barDuration = barDuration;
+        this._fvgEndTime = fvgEndTime;
+        this._scan();
+        if (this._chart) this._chart.requestUpdate();
+      }
+      _scan() {
+        this._zones = [];
+        const data = this._weeklyData;
+        for (let i = 0; i < data.length - 2; i++) {
+          const c1 = data[i];
+          const c2 = data[i + 1];
+          const c3 = data[i + 2];
+          if (c1.high < c3.low) {
+            this._zones.push({ time: getTimeAsNumber(c2.time), high: c3.low, low: c1.high, type: 'bullish' });
+          }
+          if (c1.low > c3.high) {
+            this._zones.push({ time: getTimeAsNumber(c2.time), high: c1.low, low: c3.high, type: 'bearish' });
+          }
+        }
+      }
+      draw(target) {
+        target.useBitmapCoordinateSpace((scope) => {
+          const ctx = scope.context;
+          const hRatio = scope.horizontalPixelRatio;
+          const vRatio = scope.verticalPixelRatio;
+          const chart = this._chart;
+          if (!chart) return;
+          const timeScale = chart.timeScale();
+          const priceScale = chart.priceScale('right');
+          for (const zone of this._zones) {
+            const x1 = timeScale.timeToCoordinate(zone.time);
+            const x2 = timeScale.timeToCoordinate(this._fvgEndTime);
+            const y1 = priceScale.priceToCoordinate(zone.high);
+            const y2 = priceScale.priceToCoordinate(zone.low);
+            if (x1 === null || x2 === null || y1 === null || y2 === null) continue;
+            const px = Math.min(x1, x2) * hRatio;
+            const py = Math.min(y1, y2) * vRatio;
+            const pw = Math.abs(x2 - x1) * hRatio;
+            const ph = Math.max(Math.abs(y2 - y1), 1) * vRatio;
+            ctx.fillStyle = zone.type === 'bullish' ? 'rgba(46,125,50,0.12)' : 'rgba(211,47,47,0.12)';
+            ctx.fillRect(px, py, pw, ph);
+            ctx.strokeStyle = zone.type === 'bullish' ? 'rgba(46,125,50,0.3)' : 'rgba(211,47,47,0.3)';
+            ctx.lineWidth = 1 * hRatio;
+            ctx.strokeRect(px, py, pw, ph);
+          }
+        });
+      }
+    }
+
+    function updateFVG() {
+      const barDuration = baseTf === '15m' ? 900 : baseTf === '240' ? 14400 : 86400;
+      const lastTime = baseData.length > 0 ? getTimeAsNumber(baseData[baseData.length - 1].time) : 0;
+      const totalBars = htfGap + htf1Count + colGap + htf2Count + 2 + 60;
+      const fvgEndTime = lastTime + (totalBars + 8) * barDuration;
+      if (fvgPrimitive) {
+        fvgPrimitive.updateData(htf1Data, lastTime, barDuration, fvgEndTime);
+      } else {
+        fvgPrimitive = new FVGPrimitive({ weeklyData: htf1Data, lastMainTime: lastTime, barDuration, fvgEndTime });
+        mainSeries.attachPrimitive(fvgPrimitive);
+      }
     }
 
     let debounceTimer = null;
     let autoUpdateInterval = null;
 
-    async function refreshData(silent = false) {
+    async function refreshData(silent = false, resetRange = false) {
       if (!silent) showLoading();
       try {
         const { base, htf1, htf2 } = await loadAllData();
@@ -430,6 +586,8 @@
         htf1Data = htf1;
         htf2Data = htf2;
         renderAll();
+        if (resetRange) setDefaultVisibleRange();
+        if (silent) updateWatchlistQuotes();
       } catch (err) {
         console.error(err);
         if (!silent) {
@@ -454,11 +612,11 @@
       }
     }
 
-    function debouncedRefresh() {
+    function debouncedRefresh(resetRange = false) {
       clearTimeout(debounceTimer);
       stopAutoUpdate();
       debounceTimer = setTimeout(() => {
-        refreshData(false).then(() => {
+        refreshData(false, resetRange).then(() => {
           startAutoUpdate();
         });
       }, 300);
@@ -470,17 +628,17 @@
     document.getElementById('base-tf').addEventListener('change', (e) => {
       baseTf = e.target.value;
       chart.timeScale().applyOptions({ timeVisible: baseTf === '15m' || baseTf === '60' || baseTf === '240' });
-      debouncedRefresh();
+      debouncedRefresh(true);
     });
 
     document.getElementById('htf1-tf').addEventListener('change', (e) => {
       htf1Tf = e.target.value;
-      debouncedRefresh();
+      debouncedRefresh(true);
     });
 
     document.getElementById('htf2-tf').addEventListener('change', (e) => {
       htf2Tf = e.target.value;
-      debouncedRefresh();
+      debouncedRefresh(true);
     });
 
     document.getElementById('htf1-count').addEventListener('input', (e) => {
@@ -555,7 +713,7 @@
         if (val === selectedStock) return;
         selectedStock = val;
         setActiveWatchlist(val);
-        debouncedRefresh();
+        debouncedRefresh(true);
       });
     });
 
@@ -574,32 +732,15 @@
 
     document.getElementById('context-menu-refresh').addEventListener('click', () => {
       contextMenu.style.display = 'none';
-      refreshData(false);
+      refreshData(false, true);
     });
 
     document.addEventListener('click', () => {
       contextMenu.style.display = 'none';
     });
 
-    // ── Set default visible range to last 3 months ──
-    function setDefaultVisibleRange() {
-      const now = Math.floor(Date.now() / 1000);
-      const threeMonthsAgo = now - 90 * 86400;
-      chart.timeScale().setVisibleRange({
-        from: threeMonthsAgo,
-        to: now,
-      });
-    }
-
     // Call after initial render
     setDefaultVisibleRange();
-
-    // Override renderAll to also apply visible range
-    const origRenderAll = renderAll;
-    renderAll = function() {
-      origRenderAll();
-      setDefaultVisibleRange();
-    };
 
     // Initial watchlist quote fetch
     updateWatchlistQuotes();

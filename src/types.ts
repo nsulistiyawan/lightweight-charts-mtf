@@ -55,6 +55,8 @@ export interface MTFOptions {
   labelFont?: string;
   /** Label color (default: 'rgba(255,255,255,0.5)') */
   labelColor?: string;
+  /** Extra whitespace bars after the last HTF column (default: 0) */
+  rightMargin?: number;
 }
 
 /** Resolved options with all defaults applied */
