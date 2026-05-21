@@ -30,11 +30,12 @@ const server = http.createServer((req, res) => {
     const interval = parsedUrl.query.interval || '1d';
     const range = parsedUrl.query.range || '1y';
 
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=${interval}&range=${range}`;
+    const yahooUrl = `https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?interval=${interval}&range=${range}`;
     
     const options = {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept': '*/*'
       }
     };
 
@@ -43,6 +44,9 @@ const server = http.createServer((req, res) => {
       yahooRes.on('data', (chunk) => { data += chunk; });
       yahooRes.on('end', () => {
         const statusCode = yahooRes.statusCode || 200;
+        if (statusCode !== 200) {
+          console.error(`Yahoo API error: ${statusCode} for ${ticker}`);
+        }
         res.writeHead(statusCode, {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
@@ -50,6 +54,7 @@ const server = http.createServer((req, res) => {
         res.end(data);
       });
     }).on('error', (err) => {
+      console.error(`Proxy request error: ${err.message}`);
       res.writeHead(502, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
       res.end(JSON.stringify({ error: true, message: `Yahoo proxy error: ${err.message}` }));
     });

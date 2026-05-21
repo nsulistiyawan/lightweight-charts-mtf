@@ -8,7 +8,7 @@
   <script type="importmap">
     {
       "imports": {
-        "lightweight-charts": "https://unpkg.com/lightweight-charts@5.0.0/dist/lightweight-charts.standalone.production.mjs"
+        "lightweight-charts": "https://unpkg.com/lightweight-charts@5.2.0/dist/lightweight-charts.standalone.production.mjs"
       }
     }
   </script>
@@ -284,36 +284,12 @@
       }
     }
 
-    // ── IEP (Pre-closing) candle merger ──
-    // IDX pre-closing session produces a flat candle that breaks 4H aggregation.
-    // This merges IEP candles into the preceding candle.
-    function mergeIEPCandles(data) {
-      if (data.length < 2) return data;
-      const merged = [{ ...data[0] }];
-      for (let i = 1; i < data.length; i++) {
-        const bar = data[i];
-        const isIEP = (bar.high - bar.low) === 0 ||
-                       (bar.volume !== undefined && bar.volume < 500) ||
-                       ((bar.high - bar.low) / (bar.close || 1) < 0.0005);
-        if (isIEP) {
-          const prev = merged[merged.length - 1];
-          prev.high = Math.max(prev.high, bar.high);
-          prev.low = Math.min(prev.low, bar.low);
-          prev.close = bar.close;
-          prev.volume = (prev.volume || 0) + (bar.volume || 0);
-        } else {
-          merged.push({ ...bar });
-        }
-      }
-      return merged;
-    }
-
     async function loadAllData() {
       let rawData;
       if (baseTf === '15m') {
         rawData = await fetchKlines(selectedStock, '15m', '60d');
       } else if (baseTf === '60' || baseTf === '240') {
-        rawData = await fetchKlines(selectedStock, '1h', '730d');
+        rawData = await fetchKlines(selectedStock, '1h', '360d');
       } else {
         rawData = await fetchKlines(selectedStock, '1d', '2y');
       }
@@ -321,9 +297,6 @@
       if (rawData.length === 0) {
         throw new Error("No data returned from API");
       }
-
-      // Merge IEP (pre-closing) flat candles into preceding candle
-      rawData = mergeIEPCandles(rawData);
 
       let base;
       if (baseTf === '15m' || baseTf === '60') {
@@ -363,14 +336,14 @@
       }, 300);
     }
 
-    // ── Set default visible range to last 3 months ──
+    // ── Set default visible range ──
     function setDefaultVisibleRange() {
       const now = Math.floor(Date.now() / 1000);
-      const threeMonthsAgo = now - 90 * 86400;
+      const oneYearAgo = now - 365 * 86400;
       const barSec = baseTf === '15m' ? 900 : baseTf === '240' ? 14400 : 86400;
       const htfSpan = (htfGap + htf1Count + colGap + htf2Count + 2 + 60) * barSec;
       chart.timeScale().setVisibleRange({
-        from: threeMonthsAgo,
+        from: oneYearAgo,
         to: now + htfSpan,
       });
     }
@@ -444,6 +417,114 @@
       labelColor: 'rgba(0,0,0,0.45)',
     });
 
+    // ── FVG (Fair Value Gap) from weekly data ──
+    function getTimeAsNumber(time) {
+      if (typeof time === 'number') return time;
+      if (typeof time === 'string') return Math.floor(new Date(time).getTime() / 1000);
+      return Math.floor(new Date(`${time.year}-${String(time.month).padStart(2, '0')}-${String(time.day).padStart(2, '0')}`).getTime() / 1000);
+    }
+
+    class FVGPrimitive {
+      constructor(opts) {
+        this._weeklyData = opts.weeklyData || [];
+        this._lastMainTime = opts.lastMainTime || 0;
+        this._barDuration = opts.barDuration || 86400;
+        this._chart = null;
+        this._series = null;
+        this._requestUpdate = null;
+        this._zones = [];
+        this._scan();
+      }
+      attached(param) {
+        this._chart = param.chart;
+        this._series = param.series;
+        this._requestUpdate = param.requestUpdate;
+      }
+      detached() {
+        this._chart = null;
+        this._series = null;
+        this._requestUpdate = null;
+      }
+      updateAllViews() {}
+      paneViews() {
+        return [{ renderer: () => this, zOrder: () => 'bottom' }];
+      }
+      updateData(weeklyData, lastMainTime, barDuration, fvgEndTime) {
+        this._weeklyData = weeklyData || [];
+        this._lastMainTime = lastMainTime;
+        this._barDuration = barDuration;
+        this._scan();
+        if (this._requestUpdate) this._requestUpdate();
+      }
+      _scan() {
+        this._zones = [];
+        const data = this._weeklyData;
+        for (let i = 0; i < data.length - 2; i++) {
+          const c1 = data[i];
+          const c2 = data[i + 1];
+          const c3 = data[i + 2];
+          let zone = null;
+          if (c1.high < c3.low) {
+            zone = { time: getTimeAsNumber(c2.time), high: c3.low, low: c1.high, type: 'bullish' };
+          }
+          if (c1.low > c3.high) {
+            zone = { time: getTimeAsNumber(c2.time), high: c1.low, low: c3.high, type: 'bearish' };
+          }
+          if (!zone) continue;
+          let closed = false;
+          for (let j = i + 3; j < data.length; j++) {
+            const later = data[j];
+            if (zone.type === 'bullish' && later.close <= zone.low) { closed = true; break; }
+            if (zone.type === 'bearish' && later.close >= zone.high) { closed = true; break; }
+          }
+          if (!closed) this._zones.push(zone);
+        }
+      }
+      draw(target) {
+        target.useBitmapCoordinateSpace((scope) => {
+          const ctx = scope.context;
+          const hRatio = scope.horizontalPixelRatio;
+          const vRatio = scope.verticalPixelRatio;
+          const chart = this._chart;
+          const series = this._series;
+          if (!chart || !series) return;
+          const timeScale = chart.timeScale();
+          const fvgEndTime = this._lastMainTime + 4 * this._barDuration;
+          for (const zone of this._zones) {
+            const x1 = timeScale.timeToCoordinate(zone.time);
+            const x2 = timeScale.timeToCoordinate(fvgEndTime);
+            const y1 = series.priceToCoordinate(zone.high);
+            const y2 = series.priceToCoordinate(zone.low);
+            if (x1 === null || y1 === null || y2 === null) continue;
+            const x2Coord = x2 !== null ? x2 : x1 + 100;
+            const px = Math.min(x1, x2Coord) * hRatio;
+            const py = Math.min(y1, y2) * vRatio;
+            const pw = Math.abs(x2Coord - x1) * hRatio;
+            const ph = Math.max(Math.abs(y2 - y1), 1) * vRatio;
+            const isBullish = zone.type === 'bullish';
+            ctx.fillStyle = isBullish ? 'rgba(46,125,50,0.12)' : 'rgba(128,128,128,0.15)';
+            ctx.fillRect(px, py, pw, ph);
+            ctx.strokeStyle = isBullish ? 'rgba(46,125,50,0.3)' : 'rgba(128,128,128,0.3)';
+            ctx.lineWidth = 1 * hRatio;
+            ctx.strokeRect(px, py, pw, ph);
+            // midline
+            const midPrice = (zone.high + zone.low) / 2;
+            const midY = series.priceToCoordinate(midPrice);
+            if (midY !== null) {
+              ctx.beginPath();
+              ctx.setLineDash([4 * hRatio, 4 * hRatio]);
+              ctx.strokeStyle = isBullish ? 'rgba(46,125,50,0.5)' : 'rgba(128,128,128,0.5)';
+              ctx.lineWidth = 1.5 * hRatio;
+              ctx.moveTo(Math.min(x1, x2Coord) * hRatio, midY * vRatio);
+              ctx.lineTo(Math.max(x1, x2Coord) * hRatio, midY * vRatio);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+          }
+        });
+      }
+    }
+
     let fvgPrimitive = null;
     mtf.attach(chart, mainSeries, baseData);
     updateFVG();
@@ -483,94 +564,13 @@
       updateFVG();
     }
 
-    // ── FVG (Fair Value Gap) from weekly data ──
-    function getTimeAsNumber(time) {
-      if (typeof time === 'number') return time;
-      if (typeof time === 'string') return Math.floor(new Date(time).getTime() / 1000);
-      return Math.floor(new Date(`${time.year}-${String(time.month).padStart(2, '0')}-${String(time.day).padStart(2, '0')}`).getTime() / 1000);
-    }
-
-    class FVGPrimitive {
-      constructor(opts) {
-        this._weeklyData = opts.weeklyData || [];
-        this._lastMainTime = opts.lastMainTime || 0;
-        this._barDuration = opts.barDuration || 86400;
-        this._fvgEndTime = opts.fvgEndTime || 0;
-        this._chart = null;
-        this._zones = [];
-        this._scan();
-      }
-      attached(param) {
-        this._chart = param.chart;
-      }
-      detached() {
-        this._chart = null;
-      }
-      updateAllViews() {}
-      paneViews() {
-        return [{ renderer: () => this, zOrder: () => 'bottom' }];
-      }
-      updateData(weeklyData, lastMainTime, barDuration, fvgEndTime) {
-        this._weeklyData = weeklyData || [];
-        this._lastMainTime = lastMainTime;
-        this._barDuration = barDuration;
-        this._fvgEndTime = fvgEndTime;
-        this._scan();
-        if (this._chart) this._chart.requestUpdate();
-      }
-      _scan() {
-        this._zones = [];
-        const data = this._weeklyData;
-        for (let i = 0; i < data.length - 2; i++) {
-          const c1 = data[i];
-          const c2 = data[i + 1];
-          const c3 = data[i + 2];
-          if (c1.high < c3.low) {
-            this._zones.push({ time: getTimeAsNumber(c2.time), high: c3.low, low: c1.high, type: 'bullish' });
-          }
-          if (c1.low > c3.high) {
-            this._zones.push({ time: getTimeAsNumber(c2.time), high: c1.low, low: c3.high, type: 'bearish' });
-          }
-        }
-      }
-      draw(target) {
-        target.useBitmapCoordinateSpace((scope) => {
-          const ctx = scope.context;
-          const hRatio = scope.horizontalPixelRatio;
-          const vRatio = scope.verticalPixelRatio;
-          const chart = this._chart;
-          if (!chart) return;
-          const timeScale = chart.timeScale();
-          const priceScale = chart.priceScale('right');
-          for (const zone of this._zones) {
-            const x1 = timeScale.timeToCoordinate(zone.time);
-            const x2 = timeScale.timeToCoordinate(this._fvgEndTime);
-            const y1 = priceScale.priceToCoordinate(zone.high);
-            const y2 = priceScale.priceToCoordinate(zone.low);
-            if (x1 === null || x2 === null || y1 === null || y2 === null) continue;
-            const px = Math.min(x1, x2) * hRatio;
-            const py = Math.min(y1, y2) * vRatio;
-            const pw = Math.abs(x2 - x1) * hRatio;
-            const ph = Math.max(Math.abs(y2 - y1), 1) * vRatio;
-            ctx.fillStyle = zone.type === 'bullish' ? 'rgba(46,125,50,0.12)' : 'rgba(211,47,47,0.12)';
-            ctx.fillRect(px, py, pw, ph);
-            ctx.strokeStyle = zone.type === 'bullish' ? 'rgba(46,125,50,0.3)' : 'rgba(211,47,47,0.3)';
-            ctx.lineWidth = 1 * hRatio;
-            ctx.strokeRect(px, py, pw, ph);
-          }
-        });
-      }
-    }
-
     function updateFVG() {
       const barDuration = baseTf === '15m' ? 900 : baseTf === '240' ? 14400 : 86400;
       const lastTime = baseData.length > 0 ? getTimeAsNumber(baseData[baseData.length - 1].time) : 0;
-      const totalBars = htfGap + htf1Count + colGap + htf2Count + 2 + 60;
-      const fvgEndTime = lastTime + (totalBars + 8) * barDuration;
       if (fvgPrimitive) {
-        fvgPrimitive.updateData(htf1Data, lastTime, barDuration, fvgEndTime);
+        fvgPrimitive.updateData(htf1Data, lastTime, barDuration);
       } else {
-        fvgPrimitive = new FVGPrimitive({ weeklyData: htf1Data, lastMainTime: lastTime, barDuration, fvgEndTime });
+        fvgPrimitive = new FVGPrimitive({ weeklyData: htf1Data, lastMainTime: lastTime, barDuration });
         mainSeries.attachPrimitive(fvgPrimitive);
       }
     }

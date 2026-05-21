@@ -38,8 +38,10 @@ function makeDailyBars(startTimestamp: number, count: number): OHLCData[] {
 
 describe('aggregateOHLC', () => {
   describe('4H aggregation', () => {
+    // 4H buckets with offset 3600 align to timestamps where ts % 14400 === 3600
+    // (09:00 WIB in shifted time)
     it('groups 4 hourly bars into one 4H bar', () => {
-      const start = 1704067200; // 2024-01-01 00:00:00 UTC
+      const start = 1704070800; // aligns to 4H bucket boundary with offset 3600
       const hourly = makeHourlyBars(start, 8);
       const result = aggregateOHLC(hourly, '4H');
 
@@ -47,7 +49,7 @@ describe('aggregateOHLC', () => {
     });
 
     it('uses first bar open and last bar close', () => {
-      const start = 1704067200;
+      const start = 1704070800;
       const hourly = makeHourlyBars(start, 4);
       const result = aggregateOHLC(hourly, '4H');
 
@@ -56,7 +58,7 @@ describe('aggregateOHLC', () => {
     });
 
     it('tracks highest high and lowest low', () => {
-      const start = 1704067200;
+      const start = 1704070800;
       const hourly: OHLCData[] = [
         { time: start, open: 100, high: 110, low: 90, close: 105, volume: 100 },
         { time: start + 3600, open: 105, high: 120, low: 95, close: 115, volume: 100 },
@@ -70,7 +72,7 @@ describe('aggregateOHLC', () => {
     });
 
     it('sums volume across bars', () => {
-      const start = 1704067200;
+      const start = 1704070800;
       const hourly: OHLCData[] = [
         { time: start, open: 100, high: 110, low: 90, close: 105, volume: 100 },
         { time: start + 3600, open: 105, high: 115, low: 95, close: 110, volume: 200 },
@@ -150,7 +152,7 @@ describe('aggregateOHLC', () => {
     });
 
     it('returns single bar when input fits in one period', () => {
-      const start = 1704067200;
+      const start = 1704070800;
       const hourly = makeHourlyBars(start, 3);
       const result = aggregateOHLC(hourly, '4H');
 

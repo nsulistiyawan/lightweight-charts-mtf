@@ -17,7 +17,7 @@ export function aggregateToMonthly(data: OHLCData[]): OHLCData[] {
 
 function getPeriodKeyFn(period: AggregationPeriod): (timestamp: number) => number {
   switch (period) {
-    case '4H': return (ts) => getHourBucket(ts, 4);
+    case '4H': return (ts) => getHourBucket(ts, 4, 3600);
     case '8H': return (ts) => getHourBucket(ts, 8);
     case '12H': return (ts) => getHourBucket(ts, 12);
     case '1D': return getDayStart;
@@ -70,9 +70,9 @@ function timeToTimestamp(time: OHLCData['time']): number {
   );
 }
 
-function getHourBucket(timestamp: number, hours: number): number {
+function getHourBucket(timestamp: number, hours: number, offsetSeconds: number = 0): number {
   const bucketSeconds = hours * 3600;
-  return Math.floor(timestamp / bucketSeconds) * bucketSeconds;
+  return Math.floor((timestamp - offsetSeconds) / bucketSeconds) * bucketSeconds + offsetSeconds;
 }
 
 function getDayStart(timestamp: number): number {
